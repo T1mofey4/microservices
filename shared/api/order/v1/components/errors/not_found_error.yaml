@@ -10,4 +10,4 @@ properties:
   message:
     type: string
     description: Описание ошибки
-    example: "Weather for city 'Unknown' not found" 
+    example: "Not found" 

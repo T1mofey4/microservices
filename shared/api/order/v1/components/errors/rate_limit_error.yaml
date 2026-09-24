@@ -6,8 +6,8 @@ properties:
   code:
     type: integer
     description: HTTP-код ошибки
-    example: 503
+    example: 429
   message:
     type: string
     description: Описание ошибки
-    example: Service unavailable
+    example: "Too many requests" 

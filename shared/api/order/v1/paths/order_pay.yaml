@@ -1,6 +1,8 @@
+parameters:
+  - $ref: ../params/order_uuid.yaml
 post:
-  summary: Создание заказа
-  operationId: CreateOrder
+  summary: Оплата заказа
+  operationId: OrderPay
   tags:
     - Orders
   requestBody:
@@ -8,22 +10,22 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../components/create_order_request.yaml
+          $ref: ../components/pay_order_request.yaml
   responses:
     '200':
-      description: Order created successfully
+      description: Order paid successfully
       content:
         application/json:
           schema:
-            $ref: ../components/create_order_response.yaml
+            $ref: ../components/pay_order_response.yaml
     '400':
-      description: Bad request - validation error
+      description: Bad request
       content:
         application/json:
           schema:
             $ref: ../components/errors/bad_request_error.yaml
     '404':
-      description: Not found
+      description: Order not found
       content:
         application/json:
           schema:

@@ -9,5 +9,7 @@ properties:
     description: Уникальный идентификатор заказа
   total_price:
     type: number
-    format: float
+    format: float64
+    minimum: 0.0
     description: Общая цена заказа
+    example: 300.40
