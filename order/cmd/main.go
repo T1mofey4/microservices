@@ -1,20 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
 	"time"
-	"uuid"
 
 	orderV1 "github.com/T1mofey4/microservices/week_1/shared/pkg/openapi/order/v1"
-)
-
-var (
-	ErrOrderNotFound    = errors.New("order not found")
-	ErrOrderAlreadyPaid = errors.New("order is already paid")
-	ErrOrderCancelled   = errors.New("order cancelled")
+	"github.com/google/uuid"
 )
 
 const (
@@ -36,9 +31,16 @@ type PaymentMethod int
 const (
 	PaymentMethodUnknown PaymentMethod = iota
 	PaymentMethodCard
-	PaymentMethodSBP
+	PaymentMethodSbp
 	PaymentMethodCreditCard
 	PaymentMethodInvestorMoney
+)
+
+var (
+	ErrOrderNotFound    = errors.New("order not found")
+	ErrOrderAlreadyPaid = errors.New("order is already paid")
+	ErrOrderCancelled   = errors.New("order cancelled")
+	ErrPartNotFound     = errors.New("part not found")
 )
 
 type Order struct {
@@ -63,6 +65,59 @@ func main() {
 
 }
 
+type PartInfo struct {
+	UUID  uuid.UUID
+	Price float64
+}
+
+type InventoryClient interface {
+	ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]PartInfo, error)
+}
+
+type PaymentClient interface {
+	PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m PaymentMethod) (uuid.UUID, error)
+}
+
+type PaymentStub struct{}
+
+func (p *PaymentStub) PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m PaymentMethod) (uuid.UUID, error) {
+	transactionUUID := uuid.New()
+	log.Printf("Оплата прошла успешно, transaction_uuid: %s", transactionUUID)
+
+	return transactionUUID, nil
+}
+
+type InventoryStub struct {
+	parts map[uuid.UUID]PartInfo
+}
+
+func NewEnventoryStub() *InventoryStub {
+	id1 := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	id2 := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	id3 := uuid.MustParse("33333333-3333-3333-3333-333333333333")
+
+	return &InventoryStub{
+		parts: map[uuid.UUID]PartInfo{
+			id1: {UUID: id1, Price: 100.0},
+			id2: {UUID: id2, Price: 200.0},
+			id3: {UUID: id3, Price: 300.0},
+		},
+	}
+}
+
+func (s *InventoryStub) ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]PartInfo, error) {
+	result := make([]PartInfo, 0, len(partUUIDs))
+
+	for _, id := range partUUIDs {
+		part, ok := s.parts[id]
+		if !ok {
+			return nil, fmt.Errorf("%w: %s", ErrPartNotFound, id)
+		}
+		result = append(result, part)
+	}
+	return result, nil
+}
+
 type OrderStorage struct {
 	mu     sync.RWMutex
 	orders map[uuid.UUID]*Order
@@ -78,12 +133,11 @@ func (s *OrderStorage) Create(order *Order) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	copyOrder := *order
-
 	if _, ok := s.orders[order.OrderUUID]; ok {
 		return fmt.Errorf("ошибка создания заказа: заказ с UUID %s уже существует", order.OrderUUID)
 	}
-	s.orders[order.OrderUUID] = &copyOrder
+	snapshot := *order
+	s.orders[order.OrderUUID] = &snapshot
 
 	return nil
 }
