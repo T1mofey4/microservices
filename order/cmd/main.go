@@ -18,24 +18,6 @@ const (
 	shutdownTimeout   = 10 * time.Second
 )
 
-type OrderStatus string
-
-const (
-	OrderStatusPendingPayment OrderStatus = "PENDING_PAYMENT"
-	OrderStatusPaid           OrderStatus = "PAID"
-	OrderStatusCancelled      OrderStatus = "CANCELLED"
-)
-
-type PaymentMethod int
-
-const (
-	PaymentMethodUnknown PaymentMethod = iota
-	PaymentMethodCard
-	PaymentMethodSbp
-	PaymentMethodCreditCard
-	PaymentMethodInvestorMoney
-)
-
 var (
 	ErrOrderNotFound    = errors.New("order not found")
 	ErrOrderAlreadyPaid = errors.New("order is already paid")
@@ -49,20 +31,19 @@ type Order struct {
 	PartUUIDs       []uuid.UUID
 	TotalPrice      float64
 	TransactionUUID *uuid.UUID
-	PaymentMethod   *PaymentMethod
-	Status          OrderStatus
+	PaymentMethod   *orderV1.PaymentMethod
+	Status          orderV1.OrderStatus
 }
 
 func main() {
-	storage := NewOrderStorage()
+	// storage := NewOrderStorage()
 
-	orderHandler := NewOrderHandler(storage)
+	// orderHandler := NewOrderHandler(storage)
 
-	_, err := orderV1.NewServer(orderHandler)
-	if err != nil {
-		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
-	}
-
+	// _, err := orderV1.NewServer(orderHandler)
+	// if err != nil {
+	// 	log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
+	// }
 }
 
 type PartInfo struct {
@@ -75,12 +56,12 @@ type InventoryClient interface {
 }
 
 type PaymentClient interface {
-	PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m PaymentMethod) (uuid.UUID, error)
+	PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m orderV1.PaymentMethod) (uuid.UUID, error)
 }
 
 type PaymentStub struct{}
 
-func (p *PaymentStub) PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m PaymentMethod) (uuid.UUID, error) {
+func (p *PaymentStub) PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m orderV1.PaymentMethod) (uuid.UUID, error) {
 	transactionUUID := uuid.New()
 	log.Printf("Оплата прошла успешно, transaction_uuid: %s", transactionUUID)
 
@@ -91,7 +72,7 @@ type InventoryStub struct {
 	parts map[uuid.UUID]PartInfo
 }
 
-func NewEnventoryStub() *InventoryStub {
+func NewInventoryStub() *InventoryStub {
 	id1 := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	id2 := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	id3 := uuid.MustParse("33333333-3333-3333-3333-333333333333")
@@ -154,7 +135,7 @@ func (s *OrderStorage) Get(orderUUID uuid.UUID) (Order, bool) {
 	return *order, true
 }
 
-func (s *OrderStorage) MarkOrderPaid(id, transactionUUID uuid.UUID, m PaymentMethod) error {
+func (s *OrderStorage) MarkOrderPaid(id, transactionUUID uuid.UUID, m orderV1.PaymentMethod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -163,18 +144,18 @@ func (s *OrderStorage) MarkOrderPaid(id, transactionUUID uuid.UUID, m PaymentMet
 		return ErrOrderNotFound
 	}
 
-	if order.Status != OrderStatusPendingPayment {
+	if order.Status != orderV1.OrderStatusPENDINGPAYMENT {
 		switch order.Status {
-		case OrderStatusPaid:
+		case orderV1.OrderStatusPAID:
 			return ErrOrderAlreadyPaid
-		case OrderStatusCancelled:
+		case orderV1.OrderStatusCANCELLED:
 			return ErrOrderCancelled
 		default:
 			return fmt.Errorf("неизвестный статус: %s", order.Status)
 		}
 	}
 
-	order.Status = OrderStatusPaid
+	order.Status = orderV1.OrderStatusPAID
 	order.TransactionUUID = &transactionUUID
 	order.PaymentMethod = &m
 
@@ -191,12 +172,12 @@ func (s *OrderStorage) MarkOrderCancelled(id uuid.UUID) error {
 	}
 
 	switch order.Status {
-	case OrderStatusPendingPayment:
-		order.Status = OrderStatusCancelled
+	case orderV1.OrderStatusPENDINGPAYMENT:
+		order.Status = orderV1.OrderStatusCANCELLED
 		return nil
-	case OrderStatusPaid:
+	case orderV1.OrderStatusPAID:
 		return ErrOrderAlreadyPaid
-	case OrderStatusCancelled:
+	case orderV1.OrderStatusCANCELLED:
 		return ErrOrderCancelled
 	default:
 		return fmt.Errorf("неизвестный статус: %s", order.Status)
@@ -204,11 +185,15 @@ func (s *OrderStorage) MarkOrderCancelled(id uuid.UUID) error {
 }
 
 type OrderHandler struct {
-	storage *OrderStorage
+	storage         *OrderStorage
+	inventoryClient InventoryClient
+	paymentClient   PaymentClient
 }
 
-func NewOrderHandler(storage *OrderStorage) *OrderHandler {
+func NewOrderHandler(storage *OrderStorage, inventory InventoryClient, payment PaymentClient) *OrderHandler {
 	return &OrderHandler{
-		storage: storage,
+		storage:         storage,
+		inventoryClient: inventory,
+		paymentClient:   payment,
 	}
 }
