@@ -197,3 +197,41 @@ func NewOrderHandler(storage *OrderStorage, inventory InventoryClient, payment P
 		paymentClient:   payment,
 	}
 }
+
+func (h *OrderHandler) OrderByUUID(ctx context.Context, params orderV1.OrderByUUIDParams) (orderV1.OrderByUUIDRes, error) {
+	if params.OrderUUID == uuid.Nil {
+		return &orderV1.BadRequestError{
+			Code:    400,
+			Message: "Некорректный UUID заказа",
+		}, nil
+	}
+
+	order, ok := h.storage.Get(params.OrderUUID)
+	if !ok {
+		return &orderV1.NotFoundError{
+			Code:    404,
+			Message: "Заказ не найден",
+		}, nil
+	}
+	return toOrderDto(order), nil
+}
+
+func toOrderDto(order Order) *orderV1.OrderDto {
+	dto := &orderV1.OrderDto{
+		OrderUUID:  order.OrderUUID,
+		UserUUID:   order.UserUUID,
+		PartUuids:  order.PartUUIDs,
+		TotalPrice: order.TotalPrice,
+		Status:     order.Status,
+	}
+
+	if order.TransactionUUID != nil {
+		dto.TransactionUUID = orderV1.NewOptNilUUID(*order.TransactionUUID)
+	}
+
+	if order.PaymentMethod != nil {
+		dto.PaymentMethod = orderV1.NewOptNilPaymentMethod(*order.PaymentMethod)
+	}
+
+	return dto
+}
