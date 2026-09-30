@@ -200,18 +200,12 @@ func NewOrderHandler(storage *OrderStorage, inventory InventoryClient, payment P
 
 func (h *OrderHandler) OrderByUUID(ctx context.Context, params orderV1.OrderByUUIDParams) (orderV1.OrderByUUIDRes, error) {
 	if params.OrderUUID == uuid.Nil {
-		return &orderV1.BadRequestError{
-			Code:    400,
-			Message: "Некорректный UUID заказа",
-		}, nil
+		return badRequest("Некорректный UUID заказа"), nil
 	}
 
 	order, ok := h.storage.Get(params.OrderUUID)
 	if !ok {
-		return &orderV1.NotFoundError{
-			Code:    404,
-			Message: "Заказ не найден",
-		}, nil
+		return notFound("Заказ не найден"), nil
 	}
 	return toOrderDto(order), nil
 }
@@ -234,4 +228,111 @@ func toOrderDto(order Order) *orderV1.OrderDto {
 	}
 
 	return dto
+}
+
+func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateOrderRes, error) {
+	if req.UserUUID == uuid.Nil {
+		return badRequest("Некорректный UUID пользователя"), nil
+	}
+
+	if len(req.PartsUuids) == 0 {
+		return badRequest("Список запрашиваемых запчастей пуст"), nil
+	}
+
+	parts, err := h.inventoryClient.ListParts(ctx, req.PartsUuids)
+	if err != nil {
+		if errors.Is(err, ErrPartNotFound) {
+			return &orderV1.BadRequestError{Code: 400, Message: "одна или несколько деталей не найдены"}, nil
+		}
+		log.Printf("ListParts failed: %v", err)
+		return internalError("внутренняя ошибка"), nil
+	}
+
+	var total float64
+	for _, part := range parts {
+		total += part.Price
+	}
+
+	order := &Order{
+		OrderUUID:  uuid.New(),
+		UserUUID:   req.UserUUID,
+		PartUUIDs:  req.PartsUuids,
+		TotalPrice: total,
+		Status:     orderV1.OrderStatusPENDINGPAYMENT,
+	}
+
+	if err := h.storage.Create(order); err != nil {
+		log.Printf("Create order failed: %v", err)
+		return internalError("Ошибка сохранения заказа"), nil
+	}
+
+	return &orderV1.CreateOrderResponse{
+		OrderUUID:  order.OrderUUID,
+		TotalPrice: order.TotalPrice,
+	}, nil
+}
+
+func (h *OrderHandler) OrderPay(ctx context.Context, req *orderV1.PayOrderRequest, params orderV1.OrderPayParams) (orderV1.OrderPayRes, error) {
+	if params.OrderUUID == uuid.Nil {
+		return badRequest("Некорректный UUID заказа"), nil
+	}
+
+	order, ok := h.storage.Get(params.OrderUUID)
+	if !ok {
+		return notFound("Заказ не найден"), nil
+	}
+
+	tUUID, err := h.paymentClient.PayOrder(ctx, order.UserUUID, order.OrderUUID, req.PaymentMethod)
+	if err != nil {
+		log.Printf("PayOrder failed: %v", err)
+		return internalError("Не удалось оплатить заказ"), nil
+	}
+
+	if err := h.storage.MarkOrderPaid(order.OrderUUID, tUUID, req.PaymentMethod); err != nil {
+		switch {
+		case errors.Is(err, ErrOrderNotFound):
+			return notFound("Заказ не найден"), nil
+		case errors.Is(err, ErrOrderAlreadyPaid):
+			return badRequest("Заказ уже оплачен"), nil
+		case errors.Is(err, ErrOrderCancelled):
+			return badRequest("Нельзя оплатить отмененный заказ"), nil
+		default:
+			log.Printf("MarkOrderPaid failed: %v", err)
+			return internalError("Внутренняя ошибка"), nil
+		}
+	}
+
+	return &orderV1.PayOrderResponse{TransactionUUID: tUUID}, nil
+}
+
+func (h *OrderHandler) OrderCancel(ctx context.Context, params orderV1.OrderCancelParams) (orderV1.OrderCancelRes, error) {
+	if params.OrderUUID == uuid.Nil {
+		return notFound("Некорректный UUID заказа"), nil
+	}
+
+	err := h.storage.MarkOrderCancelled(params.OrderUUID)
+	switch {
+	case errors.Is(err, ErrOrderNotFound):
+		return notFound("Заказ не найден"), nil
+	case errors.Is(err, ErrOrderAlreadyPaid):
+		return conflictError("Заказ уже оплачен и не может быть отменён"), nil
+	}
+
+	return &orderV1.OrderCancelNoContent{}, nil
+}
+
+func badRequest(msg string) *orderV1.BadRequestError {
+	return &orderV1.BadRequestError{Code: 400, Message: msg}
+}
+
+func notFound(msg string) *orderV1.NotFoundError {
+	return &orderV1.NotFoundError{Code: 404, Message: msg}
+}
+
+func internalError(msg string) *orderV1.InternalServerError {
+	return &orderV1.InternalServerError{Code: 500, Message: msg}
+}
+
+func conflictError(msg string) *orderV1.ConflictError {
+	return &orderV1.ConflictError{Code: 409, Message: msg}
 }
