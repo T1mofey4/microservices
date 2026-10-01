@@ -7,7 +7,7 @@ properties:
     type: string
     format: uuid
     description: Уникальный идентификатор пользователя
-  parts_uuids:
+  part_uuids:
     type: array
     items:
       type: string

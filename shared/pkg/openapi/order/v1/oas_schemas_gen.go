@@ -103,8 +103,8 @@ func (*ConflictError) orderCancelRes() {}
 // Ref: #/components/schemas/create_order_request
 type CreateOrderRequest struct {
 	// Уникальный идентификатор пользователя.
-	UserUUID   uuid.UUID   `json:"user_uuid"`
-	PartsUuids []uuid.UUID `json:"parts_uuids"`
+	UserUUID  uuid.UUID   `json:"user_uuid"`
+	PartUuids []uuid.UUID `json:"part_uuids"`
 }
 
 // GetUserUUID returns the value of UserUUID.
@@ -112,9 +112,9 @@ func (s *CreateOrderRequest) GetUserUUID() uuid.UUID {
 	return s.UserUUID
 }
 
-// GetPartsUuids returns the value of PartsUuids.
-func (s *CreateOrderRequest) GetPartsUuids() []uuid.UUID {
-	return s.PartsUuids
+// GetPartUuids returns the value of PartUuids.
+func (s *CreateOrderRequest) GetPartUuids() []uuid.UUID {
+	return s.PartUuids
 }
 
 // SetUserUUID sets the value of UserUUID.
@@ -122,9 +122,9 @@ func (s *CreateOrderRequest) SetUserUUID(val uuid.UUID) {
 	s.UserUUID = val
 }
 
-// SetPartsUuids sets the value of PartsUuids.
-func (s *CreateOrderRequest) SetPartsUuids(val []uuid.UUID) {
-	s.PartsUuids = val
+// SetPartUuids sets the value of PartUuids.
+func (s *CreateOrderRequest) SetPartUuids(val []uuid.UUID) {
+	s.PartUuids = val
 }
 
 // Ref: #/components/schemas/create_order_response

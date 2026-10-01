@@ -5,10 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	orderV1 "github.com/T1mofey4/microservices/week_1/shared/pkg/openapi/order/v1"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 )
 
@@ -36,14 +43,57 @@ type Order struct {
 }
 
 func main() {
-	// storage := NewOrderStorage()
+	storage := NewOrderStorage()
+	inventory := NewInventoryStub()
+	payment := &PaymentStub{}
+	orderHandler := NewOrderHandler(storage, inventory, payment)
 
-	// orderHandler := NewOrderHandler(storage)
+	orderServer, err := orderV1.NewServer(orderHandler)
+	if err != nil {
+		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
+	}
 
-	// _, err := orderV1.NewServer(orderHandler)
-	// if err != nil {
-	// 	log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
-	// }
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(10 * time.Second))
+
+	r.Mount("/", orderServer)
+
+	server := &http.Server{
+		Addr:              net.JoinHostPort("localhost", httpPort),
+		Handler:           r,
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+
+	defer func() {
+		if err := server.Close(); err != nil {
+			log.Printf("Ошибка закрытия сервера: %v", err)
+		}
+	}()
+
+	go func() {
+		log.Printf("🚀 HTTP-сервер запущен на порту %s\n", httpPort)
+		err = server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("❌ Ошибка запуска сервера: %v\n", err)
+		}
+	}()
+
+	//Graceful shutdown
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+	<-ch
+	log.Println("🛑 Завершение работы сервера...")
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	err = server.Shutdown(ctx)
+	if err != nil {
+		log.Printf("❌ Ошибка при остановке сервера: %v\n", err)
+	}
+	log.Println("✅ Сервер остановлен")
 }
 
 type PartInfo struct {
@@ -235,11 +285,11 @@ func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderV1.CreateOrder
 		return badRequest("Некорректный UUID пользователя"), nil
 	}
 
-	if len(req.PartsUuids) == 0 {
-		return badRequest("Список запрашиваемых запчастей пуст"), nil
+	if len(req.PartUuids) == 0 {
+		return badRequest("Список запрашиваемых запчастей пуст1"), nil
 	}
 
-	parts, err := h.inventoryClient.ListParts(ctx, req.PartsUuids)
+	parts, err := h.inventoryClient.ListParts(ctx, req.PartUuids)
 	if err != nil {
 		if errors.Is(err, ErrPartNotFound) {
 			return &orderV1.BadRequestError{Code: 400, Message: "одна или несколько деталей не найдены"}, nil
@@ -256,7 +306,7 @@ func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderV1.CreateOrder
 	order := &Order{
 		OrderUUID:  uuid.New(),
 		UserUUID:   req.UserUUID,
-		PartUUIDs:  req.PartsUuids,
+		PartUUIDs:  req.PartUuids,
 		TotalPrice: total,
 		Status:     orderV1.OrderStatusPENDINGPAYMENT,
 	}
