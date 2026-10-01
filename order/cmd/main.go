@@ -306,19 +306,20 @@ func (h *OrderHandler) OrderPay(ctx context.Context, req *orderV1.PayOrderReques
 }
 
 func (h *OrderHandler) OrderCancel(ctx context.Context, params orderV1.OrderCancelParams) (orderV1.OrderCancelRes, error) {
-	if params.OrderUUID == uuid.Nil {
-		return notFound("Некорректный UUID заказа"), nil
-	}
-
 	err := h.storage.MarkOrderCancelled(params.OrderUUID)
 	switch {
+	case err == nil:
+		return &orderV1.OrderCancelNoContent{}, nil
 	case errors.Is(err, ErrOrderNotFound):
 		return notFound("Заказ не найден"), nil
 	case errors.Is(err, ErrOrderAlreadyPaid):
 		return conflictError("Заказ уже оплачен и не может быть отменён"), nil
+	case errors.Is(err, ErrOrderCancelled):
+		return conflictError("Заказ уже отменен"), nil
+	default:
+		log.Printf("OrderCancel failed: %v", err)
+		return internalError("Внутренняя ошибка"), nil
 	}
-
-	return &orderV1.OrderCancelNoContent{}, nil
 }
 
 func badRequest(msg string) *orderV1.BadRequestError {

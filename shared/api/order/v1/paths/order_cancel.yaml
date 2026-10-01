@@ -20,3 +20,9 @@ post:
         application/json:
           schema:
             $ref: ../components/errors/conflict_error.yaml
+    '500':
+      description: Order already paid
+      content:
+        application/json:
+          schema:
+            $ref: ../components/errors/internal_server_error.yaml

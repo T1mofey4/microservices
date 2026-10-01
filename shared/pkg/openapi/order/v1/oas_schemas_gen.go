@@ -243,6 +243,7 @@ func (s *InternalServerError) SetMessage(val string) {
 }
 
 func (*InternalServerError) createOrderRes() {}
+func (*InternalServerError) orderCancelRes() {}
 func (*InternalServerError) orderPayRes()    {}
 
 // Ref: #/components/schemas/not_found_error
