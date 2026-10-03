@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	orderV1 "github.com/T1mofey4/microservices/week_1/shared/pkg/openapi/order/v1"
+	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"

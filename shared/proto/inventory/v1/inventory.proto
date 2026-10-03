@@ -32,7 +32,7 @@ message ListPartsRequest {
 message ListPartsResponse {
   repeated Part parts = 1;
 }
-
+// Фильтр деталей
 message PartsFilter {
     // Список UUID'ов. Пусто — не фильтруем по UUID
     repeated string uuids = 1;
@@ -46,6 +46,7 @@ message PartsFilter {
     repeated string tags = 5;
 }
 
+// Информация о детали
 message Part {
     // Уникальный идентификатор детали
     string uuid = 1;
@@ -86,6 +87,7 @@ message Manufacturer {
     string website = 3;
 }
 
+// Метаданные
 message MetadataValue {
     oneof value {
       string string_value = 1;
