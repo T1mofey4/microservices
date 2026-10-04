@@ -28,6 +28,7 @@ func NewInventoryStorage(parts []*inventoryV1.Part) *inventoryStorage {
 	}
 }
 
+// Возвращает информацию о детали по её UUID
 func (s *inventoryStorage) GetPart(ctx context.Context, uuid string) (*inventoryV1.Part, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -40,25 +41,35 @@ func (s *inventoryStorage) GetPart(ctx context.Context, uuid string) (*inventory
 	return p, nil
 }
 
+// Возвращает список деталей с возможностью фильтрации
 func (s *inventoryStorage) ListParts(ctx context.Context, filter *inventoryV1.PartsFilter) ([]*inventoryV1.Part, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	// Получаем все детали из хранилища
 	partSlice := make([]*inventoryV1.Part, 0, len(s.parts))
 	for _, p := range s.parts {
 		partSlice = append(partSlice, p)
 	}
 
+	// Если фильтр не задан (пустой), то возвращаем весь список запчастей
 	if filter == nil {
 		return partSlice, nil
 	}
 
+	// Проходим по всем фильтрам
 	result := filterByUUID(filter.Uuids, partSlice)
+	result = filterByName(filter.Names, result)
+	result = filterByCategory(filter.Categories, result)
+	result = filterByCountry(filter.ManufacturerCountries, result)
+	result = filterByTag(filter.Tags, result)
 
 	return result, nil
 }
 
+// Фильтр по UUID
 func filterByUUID(filter []string, parts []*inventoryV1.Part) []*inventoryV1.Part {
+	// Если фильтр пустой, возвращаем все части
 	if len(filter) == 0 {
 		return parts
 	}
@@ -72,6 +83,93 @@ func filterByUUID(filter []string, parts []*inventoryV1.Part) []*inventoryV1.Par
 	for _, p := range parts {
 		if _, ok := set[p.Uuid]; ok {
 			result = append(result, p)
+		}
+	}
+
+	return result
+}
+
+// Фильтр по имени
+func filterByName(filter []string, parts []*inventoryV1.Part) []*inventoryV1.Part {
+	if len(filter) == 0 {
+		return parts
+	}
+
+	set := make(map[string]struct{}, len(filter))
+	for _, name := range filter {
+		set[name] = struct{}{}
+	}
+
+	result := make([]*inventoryV1.Part, 0, len(parts))
+	for _, p := range parts {
+		if _, ok := set[p.Name]; ok {
+			result = append(result, p)
+		}
+	}
+
+	return result
+}
+
+// Фильтр по категории
+func filterByCategory(filter []inventoryV1.Category, parts []*inventoryV1.Part) []*inventoryV1.Part {
+	if len(filter) == 0 {
+		return parts
+	}
+
+	set := make(map[inventoryV1.Category]struct{}, len(filter))
+	for _, category := range filter {
+		set[category] = struct{}{}
+	}
+
+	result := make([]*inventoryV1.Part, 0, len(parts))
+	for _, p := range parts {
+		if _, ok := set[p.Category]; ok {
+			result = append(result, p)
+		}
+	}
+
+	return result
+}
+
+// Фильтр по странам
+func filterByCountry(filter []string, parts []*inventoryV1.Part) []*inventoryV1.Part {
+	if len(filter) == 0 {
+		return parts
+	}
+
+	set := make(map[string]struct{}, len(filter))
+	for _, country := range filter {
+		set[country] = struct{}{}
+	}
+
+	result := make([]*inventoryV1.Part, 0, len(parts))
+	for _, p := range parts {
+		if _, ok := set[p.Manufacturer.Country]; ok {
+			result = append(result, p)
+		}
+	}
+
+	return result
+}
+
+// Фильтр по тегам
+func filterByTag(filter []string, parts []*inventoryV1.Part) []*inventoryV1.Part {
+	if len(filter) == 0 {
+		return parts
+	}
+
+	set := make(map[string]struct{}, len(parts))
+	for _, tag := range filter {
+		set[tag] = struct{}{}
+	}
+
+	result := make([]*inventoryV1.Part, 0, len(parts))
+	for _, p := range parts {
+		for _, tag := range p.Tags {
+			if _, ok := set[tag]; ok {
+				result = append(result, p)
+				break
+			}
 		}
 	}
 

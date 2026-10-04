@@ -81,7 +81,7 @@ func main() {
 		}
 	}()
 
-	//Graceful shutdown
+	// Graceful shutdown
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
 	<-ch

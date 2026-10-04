@@ -65,6 +65,7 @@ type inventoryService struct {
 	storage *inventoryStorage
 }
 
+// GetPart отдаёт информацию о детали по её UUID
 func (s *inventoryService) GetPart(ctx context.Context, req *inventoryV1.GetPartRequest) (*inventoryV1.GetPartResponse, error) {
 	p, err := s.storage.GetPart(ctx, req.Uuid)
 	if err != nil {
@@ -72,17 +73,18 @@ func (s *inventoryService) GetPart(ctx context.Context, req *inventoryV1.GetPart
 		case errors.Is(err, ErrPartNotFound):
 			return nil, status.Errorf(codes.NotFound, "деталь uuid: %s не найдена", req.Uuid)
 		default:
-			return nil, status.Errorf(codes.Internal, "внутренняя ошибка")
+			return nil, status.Error(codes.Internal, "внутренняя ошибка")
 		}
 	}
 
 	return &inventoryV1.GetPartResponse{Part: p}, nil
 }
 
+// // ListParts отдаёт детали из storage, применяя фильтр из запроса. Пустой фильтр — все детали.
 func (s *inventoryService) ListParts(ctx context.Context, req *inventoryV1.ListPartsRequest) (*inventoryV1.ListPartsResponse, error) {
 	parts, err := s.storage.ListParts(ctx, req.Filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "внутренняя ошибка")
+		return nil, status.Error(codes.Internal, "внутренняя ошибка")
 	}
 
 	return &inventoryV1.ListPartsResponse{Parts: parts}, nil
