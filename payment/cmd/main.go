@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -9,8 +10,11 @@ import (
 	"syscall"
 
 	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 const grpcPort = 50052
@@ -56,4 +60,25 @@ func main() {
 
 type paymentService struct {
 	paymentV1.UnimplementedPaymentServiceServer
+}
+
+func (s *paymentService) PayOrder(ctx context.Context, req *paymentV1.PayOrderRequest) (*paymentV1.PayOrderResponse, error) {
+	_, err := uuid.Parse(req.OrderUuid)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid order_uuid")
+	}
+
+	_, err = uuid.Parse(req.UserUuid)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid user_uuid")
+	}
+
+	if req.PaymentMethod == paymentV1.PaymentMethod_PAYMENT_METHOD_UNSPECIFIED {
+		return nil, status.Error(codes.InvalidArgument, "invalid payment_method")
+	}
+
+	newUUID := uuid.New()
+	log.Printf("Оплата прошла успешно, transaction_uuid: %s", newUUID.String())
+
+	return &paymentV1.PayOrderResponse{TransactionUuid: newUUID.String()}, nil
 }
