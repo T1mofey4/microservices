@@ -14,13 +14,17 @@ import (
 	"time"
 
 	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
+	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
 	httpPort          = "8080"
+	inventoryPort     = "50051"
 	readHeaderTimeout = 5 * time.Second
 	shutdownTimeout   = 10 * time.Second
 )
@@ -44,9 +48,24 @@ type Order struct {
 
 func main() {
 	storage := NewOrderStorage()
-	inventory := NewInventoryStub()
+
+	inventoryAddr := net.JoinHostPort("localhost", inventoryPort)
+	inventoryConn, err := grpc.NewClient(
+		inventoryAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("ошибка создания клиента Inventory: %v", err)
+	}
+	inventoryClient := NewInventoryGRPCClient(inventoryConn)
+	defer func() {
+		if err := inventoryConn.Close(); err != nil {
+			log.Printf("Ошибка закрытия соединения inventory: %v", err)
+		}
+	}()
+
 	payment := &PaymentStub{}
-	orderHandler := NewOrderHandler(storage, inventory, payment)
+	orderHandler := NewOrderHandler(storage, inventoryClient, payment)
 
 	orderServer, err := orderV1.NewServer(orderHandler)
 	if err != nil {
@@ -146,6 +165,48 @@ func (s *InventoryStub) ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([
 		}
 		result = append(result, part)
 	}
+	return result, nil
+}
+
+type InventoryGRPCClient struct {
+	client inventoryV1.InventoryServiceClient
+}
+
+func NewInventoryGRPCClient(conn *grpc.ClientConn) *InventoryGRPCClient {
+	return &InventoryGRPCClient{client: inventoryV1.NewInventoryServiceClient(conn)}
+}
+
+func (c *InventoryGRPCClient) ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]PartInfo, error) {
+	partUUID := make([]string, 0, len(partUUIDs))
+	for _, u := range partUUIDs {
+		partUUID = append(partUUID, u.String())
+	}
+
+	filter := &inventoryV1.PartsFilter{Uuids: partUUID}
+	req := &inventoryV1.ListPartsRequest{Filter: filter}
+	res, err := c.client.ListParts(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("inventory ListParts: %w", err)
+	}
+
+	if len(res.Parts) != len(partUUID) {
+		return nil, ErrPartNotFound
+	}
+
+	result := make([]PartInfo, 0, len(res.Parts))
+	for _, p := range res.Parts {
+		uuidString, err := uuid.Parse(p.Uuid)
+		if err != nil {
+			return nil, err
+		}
+
+		toPartInfo := PartInfo{
+			UUID:  uuidString,
+			Price: p.Price,
+		}
+		result = append(result, toPartInfo)
+	}
+
 	return result, nil
 }
 
@@ -286,7 +347,7 @@ func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderV1.CreateOrder
 	}
 
 	if len(req.PartUuids) == 0 {
-		return badRequest("Список запрашиваемых запчастей пуст1"), nil
+		return badRequest("Список запрашиваемых запчастей пуст"), nil
 	}
 
 	parts, err := h.inventoryClient.ListParts(ctx, req.PartUuids)
