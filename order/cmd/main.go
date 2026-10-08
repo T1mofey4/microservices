@@ -37,16 +37,6 @@ var (
 	ErrPartNotFound     = errors.New("part not found")
 )
 
-type Order struct {
-	OrderUUID       uuid.UUID
-	UserUUID        uuid.UUID
-	PartUUIDs       []uuid.UUID
-	TotalPrice      float64
-	TransactionUUID *uuid.UUID
-	PaymentMethod   *orderV1.PaymentMethod
-	Status          orderV1.OrderStatus
-}
-
 func main() {
 	storage := NewOrderStorage()
 	inventoryAddr := net.JoinHostPort("localhost", inventoryPort)

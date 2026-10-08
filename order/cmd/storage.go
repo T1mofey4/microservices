@@ -11,6 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type Order struct {
+	OrderUUID       uuid.UUID
+	UserUUID        uuid.UUID
+	PartUUIDs       []uuid.UUID
+	TotalPrice      float64
+	TransactionUUID *uuid.UUID
+	PaymentMethod   *orderV1.PaymentMethod
+	Status          orderV1.OrderStatus
+}
+
 type OrderStorage struct {
 	mu     sync.RWMutex
 	orders map[uuid.UUID]*Order
@@ -22,6 +32,7 @@ func NewOrderStorage() *OrderStorage {
 	}
 }
 
+// Записать информацию о заказе в storage
 func (s *OrderStorage) Create(order *Order) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -35,6 +46,7 @@ func (s *OrderStorage) Create(order *Order) error {
 	return nil
 }
 
+// Получить информацию о заказе из storage
 func (s *OrderStorage) Get(orderUUID uuid.UUID) (Order, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -47,6 +59,7 @@ func (s *OrderStorage) Get(orderUUID uuid.UUID) (Order, bool) {
 	return *order, true
 }
 
+// Проверяет и меняет статус заказа
 func (s *OrderStorage) MarkOrderPaid(id, transactionUUID uuid.UUID, m orderV1.PaymentMethod) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -74,6 +87,7 @@ func (s *OrderStorage) MarkOrderPaid(id, transactionUUID uuid.UUID, m orderV1.Pa
 	return nil
 }
 
+// Меняет статус заказа на Cancelled
 func (s *OrderStorage) MarkOrderCancelled(id uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -110,6 +124,7 @@ func NewOrderHandler(storage *OrderStorage, inventory InventoryClient, payment P
 	}
 }
 
+// Получить заказ по uuid
 func (h *OrderHandler) OrderByUUID(ctx context.Context, params orderV1.OrderByUUIDParams) (orderV1.OrderByUUIDRes, error) {
 	if params.OrderUUID == uuid.Nil {
 		return badRequest("Некорректный UUID заказа"), nil
@@ -122,6 +137,7 @@ func (h *OrderHandler) OrderByUUID(ctx context.Context, params orderV1.OrderByUU
 	return toOrderDto(order), nil
 }
 
+// Преобразование Order в OrderDto для ogen
 func toOrderDto(order Order) *orderV1.OrderDto {
 	dto := &orderV1.OrderDto{
 		OrderUUID:  order.OrderUUID,
