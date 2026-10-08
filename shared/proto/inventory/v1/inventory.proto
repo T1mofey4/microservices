@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package inventory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1;inventory_v1";
+
+service InventoryService {
+    // Возвращает информацию о детали по её UUID
+    rpc GetPart(GetPartRequest) returns (GetPartResponse);
+    // Возвращает список деталей с возможностью фильтрации
+    rpc ListParts(ListPartsRequest) returns (ListPartsResponse);
+}
+
+// Идентификатор детали
+message GetPartRequest {
+    string uuid = 1;
+}
+
+// Информация о детали
+message GetPartResponse {
+    Part part = 1;
+}
+
+// Фильтр по деталям (все поля опциональны)
+message ListPartsRequest {
+    PartsFilter filter = 1;
+}
+
+// Список найденных деталей
+message ListPartsResponse {
+  repeated Part parts = 1;
+}
+// Фильтр деталей
+message PartsFilter {
+    // Список UUID'ов. Пусто — не фильтруем по UUID
+    repeated string uuids = 1;
+    // Список имён. Пусто — не фильтруем по имени
+    repeated string names = 2;
+    // Список категорий. Пусто — не фильтруем по категории
+    repeated Category categories = 3;
+    // Список стран производителей. Пусто — не фильтруем по стране
+    repeated string manufacturer_countries = 4;
+    // Список тегов. Пусто — не фильтруем по тегам
+    repeated string tags = 5;
+}
+
+// Информация о детали
+message Part {
+    // Уникальный идентификатор детали
+    string uuid = 1;
+    // Название детали
+    string name = 2;
+    // Описание детали
+    string description = 3;
+    // Цена за единицу
+    double price = 4;
+    // Количество на складе
+    int64 stock_quantity = 5;
+    // Категория
+    Category category = 6;
+    // Размеры детали
+    Dimensions dimensions = 7;
+    // Информация о производителе
+    Manufacturer manufacturer = 8;
+    // Теги для быстрого поиска
+    repeated string tags = 9;
+    // Гибкие метаданные
+    map<string, MetadataValue> metadata = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+// Информация о размерах детали
+message Dimensions {
+    double length = 1;
+    double width = 2;
+    double height = 3;
+    double weight = 4;
+}
+
+// Информация о производителе
+message Manufacturer {
+    string name = 1;
+    string country = 2;
+    string website = 3;
+}
+
+// Метаданные
+message MetadataValue {
+    oneof value {
+      string string_value = 1;
+      int64 int64_value = 2;
+      double double_value = 3;
+      bool bool_value = 4;
+    }
+}
+
+// Категория запчасти
+enum Category {
+    CATEGORY_UNSPECIFIED = 0;
+    CATEGORY_ENGINE = 1;
+    CATEGORY_FUEL = 2;
+    CATEGORY_PORTHOLE = 3;
+    CATEGORY_WING = 4;
+}
