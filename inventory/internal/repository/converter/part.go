@@ -41,6 +41,24 @@ func categoryToModel(c repoModel.Category) model.Category {
 	}
 }
 
+func CategoryToRepoModel(c model.Category) repoModel.Category {
+	switch c {
+	case model.CategoryEngine:
+		return repoModel.CategoryEngine
+	case model.CategoryFuel:
+		return repoModel.CategoryFuel
+	case model.CategoryPorthole:
+		return repoModel.CategoryPorthole
+	case model.CategoryWing:
+		return repoModel.CategoryWing
+	case model.CategoryUnspecified:
+		return repoModel.CategoryUnspecified
+	default:
+		log.Printf("unknown category: %d", c)
+		return repoModel.CategoryUnspecified
+	}
+}
+
 func dimensionsToModel(d repoModel.Dimensions) model.Dimensions {
 	return model.Dimensions{
 		Length: d.Length,
