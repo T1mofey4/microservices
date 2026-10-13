@@ -37,14 +37,6 @@ type Part struct {
 	Dimensions    Dimensions
 	Manufacturer  Manufacturer
 	Tags          []string
-	CreatedAt     *time.Time
+	CreatedAt     time.Time
 	UpdatedAt     *time.Time
-}
-
-type PartsFilter struct {
-	UUIDs                 []string
-	Names                 []string
-	Categories            []Category
-	ManufacturerCountries []string
-	Tags                  []string
 }

@@ -37,7 +37,7 @@ type Part struct {
 	Dimensions    Dimensions
 	Manufacturer  Manufacturer
 	Tags          []string
-	CreatedAt     *time.Time
+	CreatedAt     time.Time
 	UpdatedAt     *time.Time
 }
 
