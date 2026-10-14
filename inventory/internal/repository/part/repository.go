@@ -15,7 +15,13 @@ type repository struct {
 }
 
 func NewRepository() *repository {
+	tempParts := initParts()
+	parts := make(map[string]repoModel.Part, len(tempParts))
+	for _, p := range tempParts {
+		parts[p.UUID] = p
+	}
+
 	return &repository{
-		parts: make(map[string]repoModel.Part),
+		parts: parts,
 	}
 }
