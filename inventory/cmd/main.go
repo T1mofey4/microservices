@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
+	apiV1 "github.com/T1mofey4/microservices/inventory/internal/api/inventory/v1"
 	repo "github.com/T1mofey4/microservices/inventory/internal/repository/part"
 	service "github.com/T1mofey4/microservices/inventory/internal/service/part"
 )
@@ -32,9 +33,11 @@ func main() {
 
 	s := grpc.NewServer()
 
-	storage := repo.NewRepository()
-	service := service.NewService(storage)
-	inventoryV1.RegisterInventoryServiceServer(s, service)
+	repo := repo.NewRepository()
+	service := service.NewService(repo)
+	api := apiV1.NewApi(service)
+
+	inventoryV1.RegisterInventoryServiceServer(s, api)
 
 	// Включаем рефлексию для отладки
 	reflection.Register(s)
@@ -56,33 +59,3 @@ func main() {
 	s.GracefulStop()
 	log.Println("Server stopped")
 }
-
-type inventoryService struct {
-	inventoryV1.UnimplementedInventoryServiceServer
-	// storage *inventoryStorage
-}
-
-// GetPart отдаёт информацию о детали по её UUID
-// func (s *inventoryService) GetPart(ctx context.Context, req *inventoryV1.GetPartRequest) (*inventoryV1.GetPartResponse, error) {
-// 	p, err := s.storage.GetPart(ctx, req.Uuid)
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, ErrPartNotFound):
-// 			return nil, status.Errorf(codes.NotFound, "деталь uuid: %s не найдена", req.Uuid)
-// 		default:
-// 			return nil, status.Error(codes.Internal, "внутренняя ошибка")
-// 		}
-// 	}
-
-// 	return &inventoryV1.GetPartResponse{Part: p}, nil
-// }
-
-// // ListParts отдаёт детали из storage, применяя фильтр из запроса. Пустой фильтр — все детали.
-// func (s *inventoryService) ListParts(ctx context.Context, req *inventoryV1.ListPartsRequest) (*inventoryV1.ListPartsResponse, error) {
-// 	parts, err := s.storage.ListParts(ctx, req.Filter)
-// 	if err != nil {
-// 		return nil, status.Error(codes.Internal, "внутренняя ошибка")
-// 	}
-
-// 	return &inventoryV1.ListPartsResponse{Parts: parts}, nil
-// }

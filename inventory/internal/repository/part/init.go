@@ -8,7 +8,8 @@ import (
 
 func initParts() []repoModel.Part {
 	parts := []repoModel.Part{
-		{UUID: "11111111-1111-1111-1111-111111111111",
+		{
+			UUID:          "11111111-1111-1111-1111-111111111111",
 			Name:          "Main Engine",
 			Description:   "The primary engine unit for the main vehicle system.",
 			Price:         111.00,
@@ -28,7 +29,8 @@ func initParts() []repoModel.Part {
 			Tags:      []string{"electronics", "tools"},
 			CreatedAt: time.Now(),
 		},
-		{UUID: "22222222-2222-2222-2222-222222222222",
+		{
+			UUID:          "22222222-2222-2222-2222-222222222222",
 			Name:          "Main Fuel Tank",
 			Description:   "Holds the primary fuel source for operation.",
 			Price:         55.50,
@@ -48,7 +50,8 @@ func initParts() []repoModel.Part {
 			Tags:      []string{"wood", "hardware"},
 			CreatedAt: time.Now(),
 		},
-		{UUID: "33333333-3333-3333-3333-333333333333",
+		{
+			UUID:          "33333333-3333-3333-3333-333333333333",
 			Name:          "Part3",
 			Description:   "High-performance component for advanced machinery.",
 			Price:         1200.00,
@@ -68,7 +71,8 @@ func initParts() []repoModel.Part {
 			Tags:      []string{"electronics", "high-end"},
 			CreatedAt: time.Now(),
 		},
-		{UUID: "44444444-4444-4444-4444-444444444444",
+		{
+			UUID:          "44444444-4444-4444-4444-444444444444",
 			Name:          "Part4",
 			Description:   "Small, universal fastening piece.",
 			Price:         12.99,
