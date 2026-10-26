@@ -68,6 +68,7 @@ func (s *BadRequestError) SetMessage(val string) {
 
 func (*BadRequestError) createOrderRes() {}
 func (*BadRequestError) orderByUUIDRes() {}
+func (*BadRequestError) orderCancelRes() {}
 func (*BadRequestError) orderPayRes()    {}
 
 // Ref: #/components/schemas/conflict_error
@@ -99,11 +100,13 @@ func (s *ConflictError) SetMessage(val string) {
 }
 
 func (*ConflictError) orderCancelRes() {}
+func (*ConflictError) orderPayRes()    {}
 
 // Ref: #/components/schemas/create_order_request
 type CreateOrderRequest struct {
 	// Уникальный идентификатор пользователя.
-	UserUUID  uuid.UUID   `json:"user_uuid"`
+	UserUUID uuid.UUID `json:"user_uuid"`
+	// Список уникальных идентификаторов деталей.
 	PartUuids []uuid.UUID `json:"part_uuids"`
 }
 
@@ -243,6 +246,7 @@ func (s *InternalServerError) SetMessage(val string) {
 }
 
 func (*InternalServerError) createOrderRes() {}
+func (*InternalServerError) orderByUUIDRes() {}
 func (*InternalServerError) orderCancelRes() {}
 func (*InternalServerError) orderPayRes()    {}
 

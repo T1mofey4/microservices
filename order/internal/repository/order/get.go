@@ -8,6 +8,7 @@ import (
 	"github.com/T1mofey4/microservices/order/internal/repository/converter"
 )
 
+// Get получает заказ по UUID
 func (r *orderRepository) Get(ctx context.Context, orderUUID string) (model.Order, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

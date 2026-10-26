@@ -9,6 +9,7 @@ import (
 	"github.com/T1mofey4/microservices/order/internal/repository/converter"
 )
 
+// Create создает заказ
 func (r *orderRepository) Create(ctx context.Context, order model.Order) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -12,14 +11,17 @@ import (
 	"syscall"
 	"time"
 
-	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
-	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
-	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
+	orderOgenV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	orderV1 "github.com/T1mofey4/microservices/order/internal/api/order/v1"
+	inventoryV1 "github.com/T1mofey4/microservices/order/internal/client/grpc/inventory/v1"
+	paymentV1 "github.com/T1mofey4/microservices/order/internal/client/grpc/payment/v1"
+	orderRepo "github.com/T1mofey4/microservices/order/internal/repository/order"
+	orderService "github.com/T1mofey4/microservices/order/internal/service/order"
 )
 
 const (
@@ -30,15 +32,9 @@ const (
 	shutdownTimeout   = 10 * time.Second
 )
 
-var (
-	ErrOrderNotFound    = errors.New("order not found")
-	ErrOrderAlreadyPaid = errors.New("order is already paid")
-	ErrOrderCancelled   = errors.New("order cancelled")
-	ErrPartNotFound     = errors.New("part not found")
-)
-
 func main() {
-	storage := NewOrderStorage()
+	orderRepository := orderRepo.NewOrderRepository()
+
 	inventoryAddr := net.JoinHostPort("localhost", inventoryPort)
 	inventoryConn, err := grpc.NewClient(
 		inventoryAddr,
@@ -47,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("ошибка создания клиента Inventory: %v", err)
 	}
-	inventoryClient := NewInventoryGRPCClient(inventoryConn)
+	inventoryClient := inventoryV1.NewInventoryClient(inventoryConn)
 	defer func() {
 		if err := inventoryConn.Close(); err != nil {
 			log.Printf("Ошибка закрытия соединения Inventory: %v", err)
@@ -62,15 +58,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("ошибка создания клиента Payment: %v", err)
 	}
-	paymentClient := NewPaymentGRPCClient(paymentConn)
+	paymentClient := paymentV1.NewPaymentClient(paymentConn)
 	defer func() {
-		if err := inventoryConn.Close(); err != nil {
+		if err := paymentConn.Close(); err != nil {
 			log.Printf("Ошибка закрытия соединения Payment: %v", err)
 		}
 	}()
 
-	orderHandler := NewOrderHandler(storage, inventoryClient, paymentClient)
-	orderServer, err := orderV1.NewServer(orderHandler)
+	service := orderService.NewOrderService(orderRepository, inventoryClient, paymentClient)
+	orderAPI := orderV1.NewApi(service)
+	orderServer, err := orderOgenV1.NewServer(orderAPI)
 	if err != nil {
 		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
 	}
@@ -116,109 +113,4 @@ func main() {
 		log.Printf("❌ Ошибка при остановке сервера: %v\n", err)
 	}
 	log.Println("✅ Сервер остановлен")
-}
-
-type PartInfo struct {
-	UUID  uuid.UUID
-	Price float64
-}
-
-type InventoryClient interface {
-	ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]PartInfo, error)
-}
-
-type PaymentClient interface {
-	PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m orderV1.PaymentMethod) (uuid.UUID, error)
-}
-
-type InventoryGRPCClient struct {
-	client inventoryV1.InventoryServiceClient
-}
-
-func NewInventoryGRPCClient(conn *grpc.ClientConn) *InventoryGRPCClient {
-	return &InventoryGRPCClient{client: inventoryV1.NewInventoryServiceClient(conn)}
-}
-
-func (c *InventoryGRPCClient) ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]PartInfo, error) {
-	partUUID := make([]string, 0, len(partUUIDs))
-	for _, u := range partUUIDs {
-		partUUID = append(partUUID, u.String())
-	}
-
-	filter := &inventoryV1.PartsFilter{Uuids: partUUID}
-	req := &inventoryV1.ListPartsRequest{Filter: filter}
-	res, err := c.client.ListParts(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("inventory ListParts: %w", err)
-	}
-
-	if len(res.Parts) != len(partUUID) {
-		return nil, ErrPartNotFound
-	}
-
-	result := make([]PartInfo, 0, len(res.Parts))
-	for _, p := range res.Parts {
-		uuidString, err := uuid.Parse(p.Uuid)
-		if err != nil {
-			return nil, err
-		}
-
-		toPartInfo := PartInfo{
-			UUID:  uuidString,
-			Price: p.Price,
-		}
-		result = append(result, toPartInfo)
-	}
-
-	return result, nil
-}
-
-type PaymentGRPCClient struct {
-	client paymentV1.PaymentServiceClient
-}
-
-func NewPaymentGRPCClient(conn *grpc.ClientConn) *PaymentGRPCClient {
-	return &PaymentGRPCClient{client: paymentV1.NewPaymentServiceClient(conn)}
-}
-
-func (c *PaymentGRPCClient) PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, m orderV1.PaymentMethod) (uuid.UUID, error) {
-	mapped, err := mapPaymentMethod(m)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	req := &paymentV1.PayOrderRequest{
-		UserUuid:      userUUID.String(),
-		OrderUuid:     orderUUID.String(),
-		PaymentMethod: mapped,
-	}
-
-	res, err := c.client.PayOrder(ctx, req)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("ошибка запроса на оплату: %w", err)
-	}
-
-	transactionUUID, err := uuid.Parse(res.TransactionUuid)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("ошибка преобразования uuid: %w", err)
-	}
-
-	return transactionUUID, nil
-}
-
-func mapPaymentMethod(m orderV1.PaymentMethod) (paymentV1.PaymentMethod, error) {
-	switch m {
-	case orderV1.PaymentMethodUNKNOWN:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_UNSPECIFIED, errors.New("способ оплаты не выбран")
-	case orderV1.PaymentMethodCARD:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_CARD, nil
-	case orderV1.PaymentMethodSBP:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_SBP, nil
-	case orderV1.PaymentMethodCREDITCARD:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_CREDIT_CARD, nil
-	case orderV1.PaymentMethodINVESTORMONEY:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_INVESTOR_MONEY, nil
-	default:
-		return paymentV1.PaymentMethod_PAYMENT_METHOD_UNSPECIFIED, fmt.Errorf("неизвестный метод оплаты: %s", m)
-	}
 }

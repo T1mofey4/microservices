@@ -9,6 +9,9 @@ properties:
     description: Уникальный идентификатор пользователя
   part_uuids:
     type: array
+    minItems: 1
+    uniqueItems: true
+    description: Список уникальных идентификаторов деталей
     items:
       type: string
       format: uuid

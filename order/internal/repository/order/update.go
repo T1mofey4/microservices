@@ -8,6 +8,7 @@ import (
 	"github.com/T1mofey4/microservices/order/internal/repository/converter"
 )
 
+// Update обновляет заказ
 func (r *orderRepository) Update(ctx context.Context, orderUUID string, expectedStatus model.OrderStatus, updOrder model.Order) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

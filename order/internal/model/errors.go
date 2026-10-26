@@ -8,4 +8,6 @@ var (
 	ErrOrderCancelled       = errors.New("order cancelled")
 	ErrPartNotFound         = errors.New("part not found")
 	ErrInvalidPaymentMethod = errors.New("invalid payment method")
+	ErrInvalidArgument      = errors.New("invalid argument")
+	ErrStatusConflict       = errors.New("order status conflict")
 )
