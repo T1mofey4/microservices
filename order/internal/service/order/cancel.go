@@ -11,6 +11,7 @@ import (
 	repo "github.com/T1mofey4/microservices/order/internal/repository"
 )
 
+// Cancel сервис отмены заказа
 func (s *orderService) Cancel(ctx context.Context, orderUUID uuid.UUID) error {
 	order, err := s.orderRepo.Get(ctx, orderUUID.String())
 	if err != nil {

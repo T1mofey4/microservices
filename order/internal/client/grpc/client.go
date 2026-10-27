@@ -9,7 +9,7 @@ import (
 )
 
 type InventoryClient interface {
-	ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]model.PartInfo, error)
+	ListParts(ctx context.Context, filter model.PartsFilter) ([]model.PartInfo, error)
 }
 
 type PaymentClient interface {

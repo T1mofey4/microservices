@@ -11,8 +11,8 @@ import (
 )
 
 // Create создает заказ, присваивает заказу uuid, считает общую сумму
-func (s *orderService) Create(ctx context.Context, userUUID uuid.UUID, parts []uuid.UUID) (model.Order, error) {
-	listParts, err := s.inventoryClient.ListParts(ctx, parts)
+func (s *orderService) Create(ctx context.Context, userUUID uuid.UUID, filter model.PartsFilter) (model.Order, error) {
+	listParts, err := s.inventoryClient.ListParts(ctx, filter)
 	if err != nil {
 		return model.Order{}, fmt.Errorf("failed to get list of parts: %w", err)
 	}
@@ -27,7 +27,7 @@ func (s *orderService) Create(ctx context.Context, userUUID uuid.UUID, parts []u
 	order := model.Order{
 		OrderUUID:  uuid.New(),
 		UserUUID:   userUUID,
-		PartUUIDs:  parts,
+		PartUUIDs:  filter.UUIDs,
 		TotalPrice: totalPrice,
 		Status:     model.StatusPendingPayment,
 	}

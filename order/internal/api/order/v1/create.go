@@ -11,7 +11,8 @@ import (
 )
 
 func (a *api) CreateOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateOrderRes, error) {
-	order, err := a.orderService.Create(ctx, req.UserUUID, req.PartUuids)
+	filter := model.PartsFilter{UUIDs: req.PartUuids}
+	order, err := a.orderService.Create(ctx, req.UserUUID, filter)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrPartNotFound):

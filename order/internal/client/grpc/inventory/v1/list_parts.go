@@ -5,27 +5,20 @@ import (
 	"fmt"
 
 	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
-	"github.com/google/uuid"
 
 	"github.com/T1mofey4/microservices/order/internal/client/converter"
 	"github.com/T1mofey4/microservices/order/internal/model"
 )
 
 // ListParts получает из inventory список запчастей
-func (c *inventoryClient) ListParts(ctx context.Context, partUUIDs []uuid.UUID) ([]model.PartInfo, error) {
-	partUUID := make([]string, 0, len(partUUIDs))
-	for _, u := range partUUIDs {
-		partUUID = append(partUUID, u.String())
-	}
-
-	filter := inventoryV1.PartsFilter{Uuids: partUUID}
-	req := inventoryV1.ListPartsRequest{Filter: &filter}
+func (c *inventoryClient) ListParts(ctx context.Context, filter model.PartsFilter) ([]model.PartInfo, error) {
+	req := inventoryV1.ListPartsRequest{Filter: converter.FilterToProto(filter)}
 	res, err := c.client.ListParts(ctx, &req)
 	if err != nil {
 		return nil, fmt.Errorf("inventory ListParts: %w", err)
 	}
 
-	if len(res.Parts) != len(partUUID) {
+	if len(res.Parts) != len(filter.UUIDs) {
 		return nil, model.ErrPartNotFound
 	}
 
