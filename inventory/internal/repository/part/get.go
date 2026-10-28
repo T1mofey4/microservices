@@ -7,7 +7,7 @@ import (
 	"github.com/T1mofey4/microservices/inventory/internal/repository/converter"
 )
 
-func (r *repository) Get(ctx context.Context, uuid string) (*model.Part, error) {
+func (r *partRepository) Get(ctx context.Context, uuid string) (*model.Part, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

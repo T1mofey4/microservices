@@ -32,7 +32,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	service := payV1.NewService()
+	service := payV1.NewPaymentService()
 	api := apiV1.NewApi(service)
 
 	paymentV1.RegisterPaymentServiceServer(s, api)

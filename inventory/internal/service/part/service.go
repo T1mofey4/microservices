@@ -5,14 +5,14 @@ import (
 	def "github.com/T1mofey4/microservices/inventory/internal/service"
 )
 
-var _ def.Service = (*service)(nil)
+var _ def.PartService = (*partService)(nil)
 
-type service struct {
-	repo repository.Repository
+type partService struct {
+	repo repository.PartRepository
 }
 
-func NewService(repo repository.Repository) *service {
-	return &service{
+func NewService(repo repository.PartRepository) *partService {
+	return &partService{
 		repo: repo,
 	}
 }

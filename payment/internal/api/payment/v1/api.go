@@ -10,10 +10,10 @@ var _ payV1.PaymentServiceServer = (*api)(nil)
 
 type api struct {
 	payV1.UnimplementedPaymentServiceServer
-	service service.Service
+	service service.PaymentService
 }
 
-func NewApi(paymentService service.Service) *api {
+func NewApi(paymentService service.PaymentService) *api {
 	return &api{
 		service: paymentService,
 	}

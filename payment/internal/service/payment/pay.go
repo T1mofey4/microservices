@@ -9,7 +9,7 @@ import (
 	"github.com/T1mofey4/microservices/payment/internal/model"
 )
 
-func (s *service) PayOrder(ctx context.Context, orderUUID, userUUID string, method model.PaymentMethod) (string, error) {
+func (s *paymentService) PayOrder(ctx context.Context, orderUUID, userUUID string, method model.PaymentMethod) (string, error) {
 	if method == model.PaymentMethodUnspecified {
 		return "", model.ErrInvalidPaymentMethod
 	}

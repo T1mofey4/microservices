@@ -10,10 +10,10 @@ var _ inventoryV1.InventoryServiceServer = (*api)(nil)
 
 type api struct {
 	inventoryV1.UnimplementedInventoryServiceServer
-	service service.Service
+	service service.PartService
 }
 
-func NewApi(inventoryService service.Service) *api {
+func NewApi(inventoryService service.PartService) *api {
 	return &api{
 		service: inventoryService,
 	}

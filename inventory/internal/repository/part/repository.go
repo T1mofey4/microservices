@@ -7,21 +7,21 @@ import (
 	repoModel "github.com/T1mofey4/microservices/inventory/internal/repository/model"
 )
 
-var _ def.Repository = (*repository)(nil)
+var _ def.PartRepository = (*partRepository)(nil)
 
-type repository struct {
+type partRepository struct {
 	mu    sync.RWMutex
 	parts map[string]repoModel.Part
 }
 
-func NewRepository() *repository {
+func NewPartRepository() *partRepository {
 	tempParts := initParts()
 	parts := make(map[string]repoModel.Part, len(tempParts))
 	for _, p := range tempParts {
 		parts[p.UUID] = p
 	}
 
-	return &repository{
+	return &partRepository{
 		parts: parts,
 	}
 }
