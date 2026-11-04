@@ -6,3 +6,8 @@ require (
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/google/uuid v1.6.0
 )
+
+require (
+	github.com/brianvoe/gofakeit/v7 v7.18.0 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
+)
