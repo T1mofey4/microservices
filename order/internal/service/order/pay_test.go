@@ -277,3 +277,119 @@ func (s *ServiceSuite) TestPayUpdateStatusConflictPaid() {
 	s.Require().Equal(uuid.Nil, res)
 	s.Require().ErrorIs(err, model.ErrOrderAlreadyPaid)
 }
+
+func (s *ServiceSuite) TestPayUpdateStatusConflictCancelled() {
+	var (
+		orderUUID       = uuid.New()
+		userUUID        = uuid.New()
+		partUUIDs       = []uuid.UUID{uuid.New()}
+		totalPrice      = 100.26
+		paymentMethod   = model.PaymentMethodCreditCard
+		transactionUUID = uuid.New()
+	)
+
+	pendingOrder := model.Order{
+		OrderUUID:  orderUUID,
+		UserUUID:   userUUID,
+		PartUUIDs:  partUUIDs,
+		TotalPrice: totalPrice,
+		Status:     model.StatusPendingPayment,
+	}
+
+	cancelledOrder := model.Order{
+		OrderUUID:  orderUUID,
+		UserUUID:   userUUID,
+		PartUUIDs:  partUUIDs,
+		TotalPrice: totalPrice,
+		Status:     model.StatusCancelled,
+	}
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(cancelledOrder, nil).Once()
+
+	s.paymentClient.EXPECT().PayOrder(s.ctx, userUUID, orderUUID, paymentMethod).Return(transactionUUID, nil)
+
+	s.orderRepository.EXPECT().
+		Update(s.ctx, orderUUID.String(), model.StatusPendingPayment, mock.Anything).
+		Return(repo.ErrStatusConflict)
+
+	res, err := s.service.Pay(s.ctx, orderUUID, paymentMethod)
+	s.Require().Equal(uuid.Nil, res)
+	s.Require().ErrorIs(err, model.ErrOrderCancelled)
+}
+
+func (s *ServiceSuite) TestPayUpdateStatusConflictRetryUnknown() {
+	var (
+		orderUUID       = uuid.New()
+		userUUID        = uuid.New()
+		partUUIDs       = []uuid.UUID{uuid.New()}
+		totalPrice      = 100.26
+		paymentMethod   = model.PaymentMethodCreditCard
+		transactionUUID = uuid.New()
+	)
+
+	pendingOrder := model.Order{
+		OrderUUID:  orderUUID,
+		UserUUID:   userUUID,
+		PartUUIDs:  partUUIDs,
+		TotalPrice: totalPrice,
+		Status:     model.StatusPendingPayment,
+	}
+
+	statusConflictOrder := model.Order{
+		OrderUUID:  orderUUID,
+		UserUUID:   userUUID,
+		PartUUIDs:  partUUIDs,
+		TotalPrice: totalPrice,
+		Status:     model.OrderStatus("unknown"),
+	}
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(statusConflictOrder, nil).Once()
+
+	s.paymentClient.EXPECT().PayOrder(s.ctx, userUUID, orderUUID, paymentMethod).Return(transactionUUID, nil)
+
+	s.orderRepository.EXPECT().
+		Update(s.ctx, orderUUID.String(), model.StatusPendingPayment, mock.Anything).
+		Return(repo.ErrStatusConflict)
+
+	res, err := s.service.Pay(s.ctx, orderUUID, paymentMethod)
+	s.Require().Equal(uuid.Nil, res)
+	s.Require().ErrorIs(err, repo.ErrStatusConflict)
+}
+
+func (s *ServiceSuite) TestPayUpdateStatusConflictRetryGetError() {
+	var (
+		orderUUID       = uuid.New()
+		userUUID        = uuid.New()
+		partUUIDs       = []uuid.UUID{uuid.New()}
+		totalPrice      = 100.26
+		paymentMethod   = model.PaymentMethodCreditCard
+		transactionUUID = uuid.New()
+		retryErr        = errors.New("retry get failed")
+	)
+
+	pendingOrder := model.Order{
+		OrderUUID:  orderUUID,
+		UserUUID:   userUUID,
+		PartUUIDs:  partUUIDs,
+		TotalPrice: totalPrice,
+		Status:     model.StatusPendingPayment,
+	}
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
+
+	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(model.Order{}, retryErr).Once()
+
+	s.paymentClient.EXPECT().PayOrder(s.ctx, userUUID, orderUUID, paymentMethod).Return(transactionUUID, nil)
+
+	s.orderRepository.EXPECT().
+		Update(s.ctx, orderUUID.String(), model.StatusPendingPayment, mock.Anything).
+		Return(repo.ErrStatusConflict)
+
+	res, err := s.service.Pay(s.ctx, orderUUID, paymentMethod)
+	s.Require().Equal(uuid.Nil, res)
+	s.Require().ErrorIs(err, retryErr)
+}
