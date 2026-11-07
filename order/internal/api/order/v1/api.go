@@ -1,9 +1,8 @@
 package v1
 
 import (
-	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
-
 	def "github.com/T1mofey4/microservices/order/internal/service"
+	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 )
 
 var _ orderV1.Handler = (*api)(nil)

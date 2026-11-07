@@ -1,9 +1,8 @@
 package v1
 
 import (
-	payV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
-
 	"github.com/T1mofey4/microservices/payment/internal/service"
+	payV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 )
 
 var _ payV1.PaymentServiceServer = (*api)(nil)

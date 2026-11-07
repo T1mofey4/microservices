@@ -3,9 +3,8 @@ package converter
 import (
 	"log"
 
-	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
-
 	"github.com/T1mofey4/microservices/payment/internal/model"
+	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 )
 
 func MethodToModel(method paymentV1.PaymentMethod) model.PaymentMethod {

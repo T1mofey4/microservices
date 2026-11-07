@@ -3,9 +3,8 @@ package converter
 import (
 	"fmt"
 
-	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
-
 	"github.com/T1mofey4/microservices/order/internal/model"
+	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 )
 
 func PaymentMethodToProto(method model.PaymentMethod) (paymentV1.PaymentMethod, error) {

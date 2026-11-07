@@ -3,10 +3,10 @@ package converter
 import (
 	"fmt"
 
-	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 	"github.com/google/uuid"
 
 	"github.com/T1mofey4/microservices/order/internal/model"
+	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 )
 
 func PartToModel(part *inventoryV1.Part) (model.PartInfo, error) {
@@ -43,7 +43,6 @@ func FilterToProto(filter model.PartsFilter) *inventoryV1.PartsFilter {
 		default:
 			categories = append(categories, inventoryV1.Category_CATEGORY_UNSPECIFIED)
 		}
-
 	}
 
 	return &inventoryV1.PartsFilter{

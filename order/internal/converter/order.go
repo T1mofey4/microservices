@@ -3,9 +3,8 @@ package converter
 import (
 	"fmt"
 
-	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
-
 	"github.com/T1mofey4/microservices/order/internal/model"
+	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 )
 
 func OrderToOrderDto(order model.Order) orderV1.OrderDto {

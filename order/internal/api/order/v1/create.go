@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 
-	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
-
 	"github.com/T1mofey4/microservices/order/internal/converter"
 	"github.com/T1mofey4/microservices/order/internal/model"
+	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 )
 
 func (a *api) CreateOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateOrderRes, error) {

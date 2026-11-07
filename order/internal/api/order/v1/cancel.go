@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 
-	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
-
 	"github.com/T1mofey4/microservices/order/internal/model"
+	orderV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 )
 
 func (a *api) OrderCancel(ctx context.Context, params orderV1.OrderCancelParams) (orderV1.OrderCancelRes, error) {

@@ -1,10 +1,10 @@
 package v1
 
 import (
-	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 	"google.golang.org/grpc"
 
 	def "github.com/T1mofey4/microservices/order/internal/client/grpc"
+	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 )
 
 var _ def.InventoryClient = (*inventoryClient)(nil)

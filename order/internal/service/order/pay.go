@@ -49,7 +49,7 @@ func (s *orderService) Pay(ctx context.Context, orderUUID uuid.UUID, method mode
 		case errors.Is(err, model.ErrOrderNotFound):
 			return uuid.Nil, err
 		case errors.Is(err, repo.ErrStatusConflict):
-			//получаем заказ по uuid еще раз и проверяем какой именно статус у заказа
+			// получаем заказ по uuid еще раз и проверяем какой именно статус у заказа
 			retryOrder, retryErr := s.orderRepo.Get(ctx, orderUUID.String())
 			if retryErr != nil {
 				return uuid.Nil, fmt.Errorf("retry get order failed: %w", retryErr)

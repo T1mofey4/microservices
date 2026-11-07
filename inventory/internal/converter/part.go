@@ -4,10 +4,10 @@ import (
 	"log"
 	"time"
 
-	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/T1mofey4/microservices/inventory/internal/model"
+	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 )
 
 func PartToProto(p *model.Part) *inventoryV1.Part {

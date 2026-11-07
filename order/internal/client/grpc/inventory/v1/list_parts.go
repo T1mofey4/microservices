@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
-
 	"github.com/T1mofey4/microservices/order/internal/client/converter"
 	"github.com/T1mofey4/microservices/order/internal/model"
+	inventoryV1 "github.com/T1mofey4/microservices/shared/pkg/proto/inventory/v1"
 )
 
 // ListParts получает из inventory список запчастей

@@ -5,13 +5,13 @@ import (
 	"errors"
 	"log"
 
-	payV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/T1mofey4/microservices/payment/internal/converter"
 	"github.com/T1mofey4/microservices/payment/internal/model"
+	payV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 )
 
 func (a *api) PayOrder(ctx context.Context, req *payV1.PayOrderRequest) (*payV1.PayOrderResponse, error) {

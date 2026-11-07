@@ -38,7 +38,7 @@ func (s *orderService) Cancel(ctx context.Context, orderUUID uuid.UUID) error {
 		case errors.Is(err, model.ErrOrderNotFound):
 			return err
 		case errors.Is(err, repo.ErrStatusConflict):
-			//получаем заказ по uuid еще раз и проверяем какой именно статус у заказа
+			// получаем заказ по uuid еще раз и проверяем какой именно статус у заказа
 			retryOrder, retryErr := s.orderRepo.Get(ctx, orderUUID.String())
 			if retryErr != nil {
 				return fmt.Errorf("retry get order failed: %w", retryErr)

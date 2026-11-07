@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 	"github.com/google/uuid"
 
 	"github.com/T1mofey4/microservices/order/internal/client/converter"
 	"github.com/T1mofey4/microservices/order/internal/model"
+	paymentV1 "github.com/T1mofey4/microservices/shared/pkg/proto/payment/v1"
 )
 
 func (c *paymentClient) PayOrder(ctx context.Context, userUUID, orderUUID uuid.UUID, method model.PaymentMethod) (uuid.UUID, error) {

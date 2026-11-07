@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	orderOgenV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"google.golang.org/grpc"
@@ -22,6 +21,7 @@ import (
 	paymentV1 "github.com/T1mofey4/microservices/order/internal/client/grpc/payment/v1"
 	orderRepo "github.com/T1mofey4/microservices/order/internal/repository/order"
 	orderService "github.com/T1mofey4/microservices/order/internal/service/order"
+	orderOgenV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
 )
 
 const (
