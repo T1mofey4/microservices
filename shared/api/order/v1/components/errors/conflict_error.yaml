@@ -10,4 +10,4 @@ properties:
   message:
     type: string
     description: Описание ошибки
-    example: "Conlict error" 
+    example: "Conflict error" 

@@ -24,3 +24,9 @@ get:
         application/json:
           schema:
             $ref: ../components/errors/not_found_error.yaml
+    '500':
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: ../components/errors/internal_server_error.yaml
