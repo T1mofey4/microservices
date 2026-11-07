@@ -1,0 +1,45 @@
+type: object
+required:
+  - order_uuid
+  - user_uuid
+  - part_uuids
+  - total_price
+  - status
+properties:
+  order_uuid:
+    type: string
+    format: uuid
+    description: Уникальный идентификатор заказа
+    example: 123e4567-e89b-12d3-a456-426614174000
+  user_uuid:
+    type: string
+    format: uuid
+    description: Уникальный идентификатор пользователя
+    example: 123e4567-e89b-12d3-a456-426614174000
+  part_uuids:
+    type: array
+    items:
+      type: string
+      format: uuid
+    minItems: 1
+    uniqueItems: true
+    description: Список уникальных идентификаторов деталей в заказе
+    example: ["123e4567-e89b-12d3-a456-426614174000", "123e4567-e89b-12d3-a456-426614174001"]
+  total_price:
+    type: number
+    format: double
+    description: Общая стоимость заказа
+    example: 300.29
+  transaction_uuid:
+    type: string
+    format: uuid
+    nullable: true
+    description: Уникальный идентификатор транзакции
+    example: 123e4567-e89b-12d3-a456-426614174000
+  payment_method:
+    nullable: true
+    allOf:
+      - $ref: ./enums/payment_method.yaml
+  status:
+    $ref: ./enums/order_status.yaml
+
