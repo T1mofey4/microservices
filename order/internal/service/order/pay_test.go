@@ -20,15 +20,15 @@ func (s *ServiceSuite) TestPaySuccess() {
 		status          = model.StatusPendingPayment
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -56,9 +56,11 @@ func (s *ServiceSuite) TestPaySuccess() {
 }
 
 func (s *ServiceSuite) TestPayGetError() {
-	someErr := errors.New("TestPayGetError")
-	orderUUID := uuid.New()
-	paymentMethod := model.PaymentMethodCreditCard
+	var (
+		someErr       = errors.New("TestPayGetError")
+		orderUUID     = uuid.New()
+		paymentMethod = model.PaymentMethodCreditCard
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(model.Order{}, someErr)
 
@@ -75,15 +77,15 @@ func (s *ServiceSuite) TestPayAlreadyPaid() {
 		totalPrice    = 100.26
 		status        = model.StatusPaid
 		paymentMethod = model.PaymentMethodCreditCard
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -100,15 +102,15 @@ func (s *ServiceSuite) TestPayCancelled() {
 		totalPrice    = 100.26
 		status        = model.StatusCancelled
 		paymentMethod = model.PaymentMethodCreditCard
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -125,15 +127,15 @@ func (s *ServiceSuite) TestPayInvalidStatus() {
 		totalPrice    = 100.26
 		status        = model.OrderStatus("unknown")
 		paymentMethod = model.PaymentMethodCreditCard
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -151,15 +153,15 @@ func (s *ServiceSuite) TestPayPaymentError() {
 		totalPrice    = 100.26
 		status        = model.StatusPendingPayment
 		paymentMethod = model.PaymentMethodCreditCard
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -179,15 +181,15 @@ func (s *ServiceSuite) TestPayUpdateNotFound() {
 		status          = model.StatusPendingPayment
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -213,15 +215,15 @@ func (s *ServiceSuite) TestPayUpdateOtherError() {
 		status          = model.StatusPendingPayment
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
@@ -245,23 +247,23 @@ func (s *ServiceSuite) TestPayUpdateStatusConflictPaid() {
 		totalPrice      = 100.26
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
+
+		pendingOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusPendingPayment,
+		}
+
+		paidOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusPaid,
+		}
 	)
-
-	pendingOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusPendingPayment,
-	}
-
-	paidOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusPaid,
-	}
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
 
@@ -286,23 +288,23 @@ func (s *ServiceSuite) TestPayUpdateStatusConflictCancelled() {
 		totalPrice      = 100.26
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
+
+		pendingOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusPendingPayment,
+		}
+
+		cancelledOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusCancelled,
+		}
 	)
-
-	pendingOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusPendingPayment,
-	}
-
-	cancelledOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusCancelled,
-	}
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
 
@@ -327,23 +329,23 @@ func (s *ServiceSuite) TestPayUpdateStatusConflictRetryUnknown() {
 		totalPrice      = 100.26
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
+
+		pendingOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusPendingPayment,
+		}
+
+		statusConflictOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.OrderStatus("unknown"),
+		}
 	)
-
-	pendingOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusPendingPayment,
-	}
-
-	statusConflictOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.OrderStatus("unknown"),
-	}
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
 
@@ -369,15 +371,15 @@ func (s *ServiceSuite) TestPayUpdateStatusConflictRetryGetError() {
 		paymentMethod   = model.PaymentMethodCreditCard
 		transactionUUID = uuid.New()
 		retryErr        = errors.New("retry get failed")
-	)
 
-	pendingOrder := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     model.StatusPendingPayment,
-	}
+		pendingOrder = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     model.StatusPendingPayment,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(pendingOrder, nil).Once()
 

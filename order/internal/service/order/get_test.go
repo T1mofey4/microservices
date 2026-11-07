@@ -15,15 +15,15 @@ func (s *ServiceSuite) TestGetSuccess() {
 		partUUIDs  = []uuid.UUID{uuid.New()}
 		totalPrice = 100.26
 		status     = model.StatusPendingPayment
-	)
 
-	expected := model.Order{
-		OrderUUID:  orderUUID,
-		UserUUID:   userUUID,
-		PartUUIDs:  partUUIDs,
-		TotalPrice: totalPrice,
-		Status:     status,
-	}
+		expected = model.Order{
+			OrderUUID:  orderUUID,
+			UserUUID:   userUUID,
+			PartUUIDs:  partUUIDs,
+			TotalPrice: totalPrice,
+			Status:     status,
+		}
+	)
 
 	s.orderRepository.EXPECT().Get(s.ctx, orderUUID.String()).Return(expected, nil)
 
