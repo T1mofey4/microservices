@@ -32,14 +32,7 @@ jobs:
 
       - name: 📌 Install Task
         uses: arduino/setup-task@v2.0.0
-      
-      - name: 📦 Download Go modules
-        run: |
-          go work sync
-          for mod in order inventory payment shared; do
-            (cd "$mod" && go mod download)
-          done
-
+    
       - name: ✅ Run golangci-lint via Taskfile
         env:
           MODULES: ${{ inputs.modules }}
