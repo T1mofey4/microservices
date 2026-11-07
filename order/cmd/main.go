@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -43,12 +44,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("ошибка создания клиента Inventory: %v", err)
 	}
-	inventoryClient := inventoryV1.NewInventoryClient(inventoryConn)
 	defer func() {
 		if err := inventoryConn.Close(); err != nil {
 			log.Printf("Ошибка закрытия соединения Inventory: %v", err)
 		}
 	}()
+	inventoryClient := inventoryV1.NewInventoryClient(inventoryConn)
 
 	paymentAddr := net.JoinHostPort("localhost", paymentPort)
 	paymentConn, err := grpc.NewClient(
@@ -56,20 +57,22 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("ошибка создания клиента Payment: %v", err)
+		log.Printf("ошибка создания клиента Payment: %v", err)
+		runtime.Goexit()
 	}
-	paymentClient := paymentV1.NewPaymentClient(paymentConn)
 	defer func() {
 		if err := paymentConn.Close(); err != nil {
 			log.Printf("Ошибка закрытия соединения Payment: %v", err)
 		}
 	}()
+	paymentClient := paymentV1.NewPaymentClient(paymentConn)
 
 	service := orderService.NewOrderService(orderRepository, inventoryClient, paymentClient)
 	orderAPI := orderV1.NewApi(service)
 	orderServer, err := orderOgenV1.NewServer(orderAPI)
 	if err != nil {
-		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
+		log.Printf("ошибка создания сервера OpenAPI: %v", err)
+		runtime.Goexit()
 	}
 
 	r := chi.NewRouter()
