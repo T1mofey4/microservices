@@ -14,12 +14,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	orderV1 "github.com/T1mofey4/microservices/order/internal/api/order/v1"
 	inventoryV1 "github.com/T1mofey4/microservices/order/internal/client/grpc/inventory/v1"
 	paymentV1 "github.com/T1mofey4/microservices/order/internal/client/grpc/payment/v1"
+	"github.com/T1mofey4/microservices/order/internal/migrator"
 	orderRepo "github.com/T1mofey4/microservices/order/internal/repository/order"
 	orderService "github.com/T1mofey4/microservices/order/internal/service/order"
 	orderOgenV1 "github.com/T1mofey4/microservices/shared/pkg/openapi/order/v1"
@@ -34,6 +38,43 @@ const (
 )
 
 func main() {
+	ctx := context.Background()
+
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatalf("failed to load .env file: %v", err)
+	}
+
+	dbURI := os.Getenv("DB_URI")
+	if dbURI == "" {
+		log.Fatalf("DB_URI is not set")
+	}
+
+	pool, err := pgxpool.New(ctx, dbURI)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	err = pool.Ping(ctx)
+	if err != nil {
+		log.Fatalf("database is unavailable: %v", err)
+	}
+
+	db := stdlib.OpenDBFromPool(pool)
+	defer db.Close()
+
+	migrationsDir := os.Getenv("MIGRATIONS_DIR")
+	if migrationsDir == "" {
+		migrationsDir = "migrations"
+	}
+	migratorRunner := migrator.NewMigrator(db, migrationsDir)
+
+	err = migratorRunner.Up()
+	if err != nil {
+		log.Fatalf("database migration error: %v", err)
+	}
+
 	orderRepository := orderRepo.NewOrderRepository()
 
 	inventoryAddr := net.JoinHostPort("localhost", inventoryPort)
