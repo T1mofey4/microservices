@@ -28,15 +28,15 @@ type Manufacturer struct {
 }
 
 type Part struct {
-	UUID          string
-	Name          string
-	Description   string
-	Price         float64
-	StockQuantity int64
-	Category      Category
-	Dimensions    Dimensions
-	Manufacturer  Manufacturer
-	Tags          []string
-	CreatedAt     time.Time
-	UpdatedAt     *time.Time
+	UUID          string       `bson:"uuid,omitempty"`
+	Name          string       `bson:"name"`
+	Description   string       `bson:"description"`
+	Price         float64      `bson:"price"`
+	StockQuantity int64        `bson:"stock_quantity"`
+	Category      Category     `bson:"category"`
+	Dimensions    Dimensions   `bson:"dimensions"`
+	Manufacturer  Manufacturer `bson:"manufacturer"`
+	Tags          []string     `bson:"tags"`
+	CreatedAt     time.Time    `bson:"created_at"`
+	UpdatedAt     *time.Time   `bson:"updated_at,omitempty"`
 }
