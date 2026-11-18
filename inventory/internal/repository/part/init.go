@@ -1,12 +1,17 @@
 package part
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	repoModel "github.com/T1mofey4/microservices/inventory/internal/repository/model"
 )
 
-func initParts() []repoModel.Part {
+func (r *partRepository) InitParts(ctx context.Context) error {
 	parts := []repoModel.Part{
 		{
 			UUID:          "11111111-1111-1111-1111-111111111111",
@@ -93,5 +98,31 @@ func initParts() []repoModel.Part {
 			CreatedAt: time.Now(),
 		},
 	}
-	return parts
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return fmt.Errorf("init parts count documents: %w", err)
+	}
+
+	if count > 0 {
+		log.Println("db has test data")
+		return nil
+	}
+
+	partsInterface := make([]interface{}, 0, len(parts))
+
+	for _, p := range parts {
+		partsInterface = append(partsInterface, p)
+	}
+
+	log.Println("db is empty, creating test data...")
+
+	_, err = r.collection.InsertMany(ctx, partsInterface)
+	if err != nil {
+		return fmt.Errorf("init parts insert many: %w", err)
+	}
+
+	log.Println("test data created")
+
+	return nil
 }
