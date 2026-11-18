@@ -20,3 +20,11 @@ packages:
     interfaces:
       InventoryClient:
       PaymentClient:
+
+  github.com/T1mofey4/microservices/inventory/internal/service:
+    interfaces:
+      PartService:
+      
+  github.com/T1mofey4/microservices/inventory/internal/repository:
+    interfaces:
+      PartRepository:
