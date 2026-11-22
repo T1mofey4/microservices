@@ -28,3 +28,8 @@ packages:
   github.com/T1mofey4/microservices/inventory/internal/repository:
     interfaces:
       PartRepository:
+
+  github.com/T1mofey4/microservices/payment/internal/config:
+    interfaces:
+      LoggerConfig:
+      PaymentGRPCConfig:
